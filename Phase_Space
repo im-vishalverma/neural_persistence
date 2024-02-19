@@ -1,0 +1,52 @@
+import numpy as np
+from matplotlib import pylab
+import math
+u1_0 =  0
+v1_0 =  0
+c = -.1
+I = np.linspace(0,2,N)
+e = 0.01
+t0 = 0
+tn = 5
+n = 10000
+t = np.linspace(t0,tn,n)
+h = (tn-t0)/n
+u1 =[]
+v1 =[]
+def slope_u1(u1,v1):      
+    return (u1 * (u1+c) * (1-u1) - v1 + I) / e
+def slope_v1(u1,v1):
+    return (u1 - 0.5 * v1)
+for i in range (0,n):
+    k1 = h * slope_u1(u1_0,v1_0)
+    l1 = h * slope_v1(u1_0,v1_0)
+     
+    
+    k2 = h * slope_u1(u1_0 + 0.5*k1, v1_0 + 0.5*l1)
+    l2 = h * slope_v1(u1_0 + 0.5*k1, v1_0 + 0.5*l1)
+     
+    
+    k3 = h * slope_u1(u1_0+0.5*k2, v1_0 + 0.5*l2)
+    l3 = h * slope_v1(u1_0+0.5*k2, v1_0 + 0.5*l2)
+    
+    
+    k4 = h * slope_u1(u1_0+k3, v1_0+l3)
+    l4 = h * slope_v1(u1_0+k3, v1_0+l3)
+   
+    
+    k = (k1+2*(k2+k3)+k4)/6
+    l = (l1+2*(l2+l3)+l4)/6
+     
+    
+    u1_0 = u1_0 + k
+    v1_0 = v1_0 + l
+   
+    u1.append(u1_0)
+    v1.append(v1_0)
+
+pylab.plot(u1,v1,'black',lw=1)
+pylab.xlabel('voltage')
+pylab.ylabel('v')
+pylab.grid()
+pylab.plot()
+pylab.plot()
