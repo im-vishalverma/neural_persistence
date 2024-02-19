@@ -1,0 +1,81 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+num_neurons = 6000
+result_matrix = np.random.choice([0, 1], size=(num_neurons, num_neurons), p=[0.999, 0.001])
+for i in range(num_neurons):
+    result_matrix[i, i] = 0
+
+# initial states#initial states
+u=np.zeros(num_neurons)
+v=np.zeros(num_neurons)
+s=np.zeros(num_neurons)
+
+def du(u,v,s):
+  c = -0.1
+  epsilon=0.075
+  E=5.0*np.random.choice([-1,+1],(num_neurons),p=[.80,0.20])
+  connectivity_matrix= result_matrix
+  return (u*(1-u)*(u+c)-v - 0.1*np.matmul(s*(u-E),connectivity_matrix))/epsilon
+
+def dv(u,v,s):
+  b=0.5
+  return u-b*v
+
+def ds(u,v,s):
+  A=3.0
+  B=3.0
+  u_th=0.3
+  u_sl=0.001
+  return A*(-s) + B*(1-s)*0.5*(1+np.tanh((u-u_th)/u_sl))
+
+h=0.05
+time_steps=500
+
+matrix3=np.zeros((time_steps,num_neurons))
+matrix4=np.zeros((time_steps,num_neurons))
+epsilon=0.075
+I=np.zeros(num_neurons)
+I[1000]=0.07
+I[2000]=0.07
+I[3000]=0.07
+I[5000]=0.07
+
+
+for i in range(time_steps):
+
+    k1=h*(du(u,v,s)+I*0.5*(1-np.tanh(i-20))/epsilon)
+    l1=h*dv(u,v,s)
+    m1=h*ds(u,v,s)
+
+    k2=h*(du(u+0.5*k1,v+0.5*l1,s+0.5*m1)+I*0.5*(1-np.tanh(i-20))/epsilon)
+    l2=h*dv(u+0.5*k1,v+0.5*l1,s+0.5*m1)
+    m2=h*ds(u+0.5*k1,v+0.5*l1,s+0.5*m1)
+
+    k3=h*(du(u+0.5*k2,v+0.5*l2,s+0.5*m2)+I*0.5*(1-np.tanh(i-20))/epsilon)
+    l3=h*dv(u+0.5*k2,v+0.5*l2,s+0.5*m2)
+    m3=h*ds(u+0.5*k2,v+0.5*l2,s+0.5*m2)
+
+    k4=h*(du(u+k3,v+l3,s+m3)+I*0.5*(1-np.tanh(i-20))/epsilon)
+    l4=h*dv(u+k3,v+l3,s+m3)
+    m4=h*ds(u+k3,v+l3,s+m3)
+
+    k=(k1+2*k2+2*k3+k4)/6
+    l=(l1+2*l2+2*l3+l4)/6
+    m=(m1+2*m2+2*m3+m4)/6
+
+    u+=k
+    v+=l
+    s+=m
+
+    matrix3[i,:]=u
+    matrix4[i,:]=v
+
+plt.subplot(211)
+plt.imshow(np.transpose(matrix3),'bwr',aspect='auto')
+plt.colorbar(orientation='vertical').set_label('Neuron Voltage')
+plt.xlabel('Time steps')
+plt.ylabel('Neuron ID')
+plt.axis('off')
+plt.text(140,-108,'Time Steps (of size 0.05 a.u.)', )
+plt.text(-18,4000,'Neuron  IDs',rotation=90)
