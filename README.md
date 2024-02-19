@@ -1,1 +1,1 @@
-This is a code to create spatiotemporal patterns.
+This is a code for the paper titled "What Causes Persistent Neural Activity?".
