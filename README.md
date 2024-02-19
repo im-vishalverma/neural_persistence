@@ -1,1 +1,1 @@
-# neural_persistence
+This is a code to create spatiotemporal patterns.
