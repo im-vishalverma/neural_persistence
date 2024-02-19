@@ -1,1 +1,1 @@
-This is a code for the paper titled "What Causes Persistent Neural Activity?".
+This is a code for the paper titled "What Causes Persistent Neural Activity?" available on biorxv.
