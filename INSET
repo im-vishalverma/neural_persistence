@@ -1,0 +1,60 @@
+#IE or EI cells connected forms an Inset. 
+#Post Inhibitory Rebound.
+import numpy as np
+from matplotlib import pylab
+import math 
+from scipy import integrate
+
+c = -0.1
+e1 = 0.01
+e2 = 0.01
+A = 3
+B = 3
+vth = 0.3
+vsl = 0.001
+v1, v2, w1, w2, s12, s21 = np.zeros(2), np.zeros(2), np.zeros(2), np.zeros(2), np.zeros(2), np.zeros(2)
+g21 = 0.05
+g12 = 0.05
+E1 = 5
+E2 = -5
+I1 = 0.0 
+
+# Define I2 function
+def I2_func(t):
+    if t <= 20:
+        return 0.03
+    else:
+        return 0
+
+def f(t, r):
+    v1, v2, w1, w2, s12, s21 = r
+    I2 = I2_func(t)  # Compute I2 based on time
+    fv1 = (v1 * (v1 + c) * (1 - v1) - w1 + I1 - g21 * s21 * (v1 - E2)) / e1
+    fv2 = (v2 * (v2 + c) * (1 - v2) - w2 + I2 - g12 * s12 * (v2 - E1)) / e2
+    fw1 = v1 - 0.5 * w1
+    fw2 = v2 - 0.5 * w2
+    fs12 = A * (1 - s12) * 0.5 * (1 + np.tanh((v1 - vth) / vsl)) - B * s12
+    fs21 = A * (1 - s21) * 0.5 * (1 + np.tanh((v2 - vth) / vsl)) - B * s21
+    return fv1, fv2, fw1, fw2, fs12, fs21
+
+sol = integrate.solve_ivp(f, (0, 5), (v1[-1], v2[-1], w1[-1], w2[-1], s12[-1], s21[-1]), method='Radau',
+                           t_eval=np.linspace(0, 5, 500), rtol=1e-5)
+
+t = sol.t
+v1, v2, w1, w2, s12, s21 = sol.y
+
+pylab.subplot(221)
+pylab.plot(t, v1, 'black', label='')
+pylab.grid()
+pylab.xlabel('time(ms)')
+pylab.ylabel('Voltage (mV)')
+pylab.legend(loc='upper right')
+pylab.title('Neuron 1')
+
+pylab.subplot(222)
+pylab.plot(t, v2, 'black', label='stimlated')
+pylab.title('Neuron 2')
+pylab.xlabel('time(ms)')
+pylab.grid()
+pylab.legend()
+pylab.show()
