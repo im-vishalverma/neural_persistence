@@ -10,7 +10,7 @@ I1,I2,I3 = 0.0,0.0,0.0
 # Wb defines synaptic weight of the connection from E2 TO E3
 # Wc defines synaptic weight of the connection from E3 TO I1
 
-Wa,Wb,Wc = 4,4,4
+Wa,Wb,Wc = 4,4,4 # other value for Wc = 2 
 
 S_0 = 1
 alpha = 3
