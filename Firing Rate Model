@@ -1,0 +1,207 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+num_nodes = 1
+
+E1,E2,E3 = 0.0,0.0,0.0
+I1,I2,I3 = 0.0,0.0,0.0
+
+# Wa defines synaptic weight of the connection from E1 TO E2
+# Wb defines synaptic weight of the connection from E2 TO E3
+# Wc defines synaptic weight of the connection from E3 TO I1
+
+Wa,Wb,Wc = 4,4,4
+
+S_0 = 1
+alpha = 3
+
+# --------------------------------------------------------
+
+def slope_E1(E1,I1,E2,I2,E3,I3,P_E):
+  W1,W2,W3,W4 = 6.5,6.5,6.5,0.0
+  P_I,Q_E,Q_I = 0,0,0
+  S_EE = W1*E1 + P_E
+  S_EI = W2*I1 + P_I
+  S_IE = W3*E1 + Q_E
+  S_II = W4*I1 + Q_I
+  if S_EE - S_EI < 1e-6:
+    h=0
+  else:
+    h = 1/(1+(S_0/(S_EE - S_EI))**alpha)
+  tau_E = 0.010
+  return (-E1 + (1-E1)*h )/tau_E
+
+def slope_I1(E1,I1,E2,I2,E3,I3):
+  W1,W2,W3,W4 = 6.5,6.5,6.5,0.0
+  P_E,P_I,Q_E,Q_I = 0,0,0,0
+
+  S_EE = W1*E1 + P_E
+  S_EI = W2*I1 + P_I
+  S_IE = W3*E1 + Q_E
+  S_II = W4*I1 + Q_I
+  S_13 = Wc*E3
+  if S_IE-S_II+S_13 < 1e-6:
+    h=0
+  else:
+    h = 1/(1+(S_0/(S_IE - S_II + S_13))**alpha)
+  tau_I = 0.007
+  return (-I1 + (1-I1)*h )/tau_I
+
+# ------------------------------------------------
+
+def slope_E2(E1,I1,E2,I2,E3,I3):
+  W1,W2,W3,W4 = 6.5,6.5,6.5,0.0
+  P_E,P_I,Q_E,Q_I = 0,0,0,0
+
+  S_EE = W1*E2 + P_E
+  S_EI = W2*I2 + P_I
+  S_IE = W3*E2 + Q_E
+  S_II = W4*I2 + Q_I
+  S_21 = Wa*E1
+  if S_EE - S_EI + S_21 < 1e-6:
+    h=0
+  else:
+    h = 1/(1+(S_0/(S_EE - S_EI + S_21))**alpha)
+  tau_E = 0.010
+  return (-E2 + (1-E2)*h )/tau_E
+
+def slope_I2(E1,I1,E2,I2,E3,I3):
+  W1,W2,W3,W4 = 6.5,6.5,6.5,0.0
+  P_E,P_I,Q_E,Q_I = 0,0.18,0,0
+
+  S_EE = W1*E2 + P_E
+  S_EI = W2*I2 + P_I
+  S_IE = W3*E2 + Q_E
+  S_II = W4*I2 + Q_I
+  if S_IE-S_II < 1e-6:
+    h=0
+  else:
+    h = 1/(1+(S_0/(S_IE-S_II))**alpha)
+  tau_I = 0.007
+  return (-I2 + (1-I2)*h )/tau_I
+
+# ----------------------------------------------------
+
+def slope_E3(E1,I1,E2,I2,E3,I3):
+  W1,W2,W3,W4 = 4,2,1.2,0
+  P_E,P_I,Q_E,Q_I = 0,0,0,0
+
+  S_EE = W1*E3 + P_E
+  S_EI = W2*I3 + P_I
+  S_IE = W3*E3 + Q_E
+  S_II = W4*I3 + Q_I
+  S_31 = Wb*E2
+  if S_EE - S_EI + S_31 < 1e-6:
+    h=0
+  else:
+    h = 1/(1+(S_0/(S_EE - S_EI - S_31))**alpha)
+  tau_E = 0.010
+  return (-E3 + (1-E3)*h )/tau_E
+
+def slope_I3(E1,I1,E2,I2,E3,I3):
+  W1,W2,W3,W4 = 4,2,1.2,0
+  P_E,P_I,Q_E,Q_I = 0,0.18,0,0
+
+  S_EE = W1*E3 + P_E
+  S_EI = W2*I3 + P_I
+  S_IE = W3*E3 + Q_E
+  S_II = W4*I3 + Q_I
+  if S_IE-S_II < 1e-6:
+    h=0
+  else:
+    h = 1/(1+(S_0/(S_IE-S_II))**alpha)
+  tau_I = 0.007
+  return (-I3 + (1-I3)*h )/tau_I
+
+# -----------------------------------------------------------
+
+ω = 0.001 # οmega is the time step size.
+time_steps = 1500
+
+def step_function(x,threshold):
+  if x<threshold:
+    t = 0
+  else:
+    t = 1
+  return t
+
+X=np.zeros(time_steps)
+Y=np.zeros(time_steps)
+Z=np.zeros(time_steps)
+A=np.zeros(time_steps)
+B=np.zeros(time_steps)
+C=np.zeros(time_steps)
+
+for j in range (time_steps):
+
+    if j < 1000:
+      P_E = 0.32
+    else:
+      P_E = 0
+
+    k1 = ω*slope_E1(E1,I1,E2,I2,E3,I3,P_E)
+    l1 = ω*slope_I1(E1,I1,E2,I2,E3,I3)
+    m1 = ω*slope_E2(E1,I1,E2,I2,E3,I3)
+    n1 = ω*slope_I2(E1,I1,E2,I2,E3,I3)
+    p1 = ω*slope_E3(E1,I1,E2,I2,E3,I3)
+    q1 = ω*slope_I3(E1,I1,E2,I2,E3,I3)
+
+    k2 = ω*slope_E1(E1+0.5*k1,I1+0.5*l1,E2+0.5*m1,I2+0.5*n1,E3+0.5*p1,I3+0.5*q1,P_E)
+    l2 = ω*slope_I1(E1+0.5*k1,I1+0.5*l1,E2+0.5*m1,I2+0.5*n1,E3+0.5*p1,I3+0.5*q1)
+    m2 = ω*slope_E2(E1+0.5*k1,I1+0.5*l1,E2+0.5*m1,I2+0.5*n1,E3+0.5*p1,I3+0.5*q1)
+    n2 = ω*slope_I2(E1+0.5*k1,I1+0.5*l1,E2+0.5*m1,I2+0.5*n1,E3+0.5*p1,I3+0.5*q1)
+    p2 = ω*slope_E3(E1+0.5*k1,I1+0.5*l1,E2+0.5*m1,I2+0.5*n1,E3+0.5*p1,I3+0.5*q1)
+    q2 = ω*slope_I3(E1+0.5*k1,I1+0.5*l1,E2+0.5*m1,I2+0.5*n1,E3+0.5*p1,I3+0.5*q1)
+
+    k3 = ω*slope_E1(E1+0.5*k2,I1+0.5*l2,E2+0.5*m2,I2+0.5*n2,E3+0.5*p2,I3+0.5*q2,P_E)
+    l3 = ω*slope_I1(E1+0.5*k2,I1+0.5*l2,E2+0.5*m2,I2+0.5*n2,E3+0.5*p2,I3+0.5*q2)
+    m3 = ω*slope_E2(E1+0.5*k2,I1+0.5*l2,E2+0.5*m2,I2+0.5*n2,E3+0.5*p2,I3+0.5*q2)
+    n3 = ω*slope_I2(E1+0.5*k2,I1+0.5*l2,E2+0.5*m2,I2+0.5*n2,E3+0.5*p2,I3+0.5*q2)
+    p3 = ω*slope_E3(E1+0.5*k2,I1+0.5*l2,E2+0.5*m2,I2+0.5*n2,E3+0.5*p2,I3+0.5*q2)
+    q3 = ω*slope_I3(E1+0.5*k2,I1+0.5*l2,E2+0.5*m2,I2+0.5*n2,E3+0.5*p2,I3+0.5*q2)
+
+    k4 = ω*slope_E1(E1+k3,I1+l3,E2+m3,I2+n3,E3+p3,I3+q3,P_E)
+    l4 = ω*slope_I1(E1+k3,I1+l3,E2+m3,I2+n3,E3+p3,I3+q3)
+    m4 = ω*slope_E2(E1+k3,I1+l3,E2+m3,I2+n3,E3+p3,I3+q3)
+    n4 = ω*slope_I2(E1+k3,I1+l3,E2+m3,I2+n3,E3+p3,I3+q3)
+    p4 = ω*slope_E3(E1+k3,I1+l3,E2+m3,I2+n3,E3+p3,I3+q3)
+    q4 = ω*slope_I3(E1+k3,I1+l3,E2+m3,I2+n3,E3+p3,I3+q3)
+
+    k = (k1+k2*2+2*k3+k4)/6
+    l = (l1+l2*2+2*l3+l4)/6
+    m = (m1+m2*2+2*m3+m4)/6
+    n = (n1+n2*2+2*n3+n4)/6
+    p = (p1+p2*2+2*p3+p4)/6
+    q = (q1+q2*2+2*q3+q4)/6
+
+    E1+=k
+    I1+=l
+    E2+=m
+    I2+=n
+    E3+=p
+    I3+=q
+
+    X[j]=E1
+    Y[j]=I1
+    Z[j]=E2
+    A[j]=I2
+    B[j]=E2
+    C[j]=I3
+
+plt.subplot(311)
+plt.plot(np.arange(time_steps),X,'grey',label='E1') # inhibitory
+plt.plot(np.arange(time_steps),Y,'black',label='I1') # excitatory
+plt.legend()
+plt.axis('on')
+plt.subplot(312)
+plt.plot(np.arange(time_steps),Z,'GREEN',label='E2') # excitatory
+plt.plot(np.arange(time_steps),A,'Pink',label='I2') # excitatory
+plt.axis('on')
+plt.legend()
+plt.subplot(313)
+plt.plot(np.arange(time_steps),B,'yellow',label='E3') # excitatory
+plt.plot(np.arange(time_steps),C,'MAGENTA',label='I3') # excitatory
+plt.ylabel('firing rates')
+plt.xlabel('time (ms)')
+plt.axis('on')
+plt.legend()
