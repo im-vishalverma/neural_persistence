@@ -1,1 +1,1 @@
-This is a code for the paper titled "What Causes Persistent Neural Activity?" by author Vishal Verma available on biorxv.
+These are the codes for the paper titled "What Causes Persistent Neural Activity?" authored by Vishal Verma available on biorxv.
