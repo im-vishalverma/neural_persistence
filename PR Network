@@ -1,0 +1,168 @@
+G=np.random.choice([0,1],(num_neurons,num_neurons),[0.994,0.006])
+for i in range(num_neurons):
+  G[i,i]=0
+
+Is=np.random.choice([.1,0.0],size=(num_neurons),p=[0.04,0.96])
+#network of 1000 pinsky-rinzel neurons
+import numpy as np
+import matplotlib.pyplot as plt
+
+num_neurons=1000
+
+Id=0.0
+p=0.5
+gc=2.1
+gL=0.1
+gNa=30.0
+gK_DR=15.0
+gK_C=15.0
+gCa=10.0
+gK_AHP=0.8
+gKCa=15.0
+gAMPA=0.014
+gNMDA=0.0
+
+Cm=3.0
+X1=[]
+X2=[]
+Y1=[]
+Y2=[]
+
+Vs=np.zeros(num_neurons)
+Vd=np.zeros(num_neurons)
+Ca=np.zeros(num_neurons)
+h=np.zeros(num_neurons)
+n=np.zeros(num_neurons)
+s=np.zeros(num_neurons)
+c=np.zeros(num_neurons)
+q=np.zeros(num_neurons)
+S=np.zeros(num_neurons)
+W=np.zeros(num_neurons)
+VL  = 0.02
+VNa = 120
+VK  = -15.0
+VCa = 140
+
+def Heaviside(arr,theta):
+    return np.where(arr >= theta, 1, 0)
+def slope_Vs(Vs,h,n,Vd):
+    return (-(gL*(Vs-VL))-(gNa*(((-(0.32*(Vs-13.1))/(np.exp(-(Vs-13.1)/4.0)-1.0))/((-(0.32*(Vs-13.1))/(np.exp(-(Vs-13.1)/4.0)-1.0))+((0.28*(Vs-40.1))/(np.exp((Vs-40.1)/5.0)-1.0))))**2)*h*(Vs-VNa)) -(gK_DR*n*(Vs-VK)) +(gc/p)*(Vd-Vs) +Is/p)/Cm
+def slope_Vd(Vd,s,q,c,Ca,Vs):
+    VSyn=30
+    I_NMDA=gNMDA*S*(Vd-VSyn)/(1+0.28*np.exp(-0.062*(Vd-60)))
+    I_AMPA=gAMPA*W*(Vd-VSyn)
+    I_Syn=I_AMPA+I_NMDA
+    return (-(gL*(Vd-VL))-(gCa*(s**2)*(Vd-VCa))-(gK_AHP*q*(Vd-VK))-(gK_C*c*np.clip(Ca/250,0,1)*(Vd-VK))- I_Syn +(gc/(1-p))*(Vs-Vd)+ Id/(1-p))/Cm
+def slope_Ca(s,Vd,Ca):
+    return (-0.13*(gCa*(s**2)*(Vd-VCa)) - 0.075*Ca)
+def slope_h(Vs,h):
+    return (0.128*np.exp((17.0-Vs)/18.0))*(1-h)-(4.0/(np.exp((-Vs+40.0)/5.0)+1.0))*(h)
+def slope_n(Vs,n):
+    return (-0.016*(Vs-35.1)/(np.exp(-(Vs-35.1)/5)-1.0))*(1-n)-(0.25*np.exp((-.025*Vs+.5)))*n
+def slope_s(Vd,s):
+    return (1.6/(1.0+np.exp(-0.072*(Vd-65.0))))*(1-s)-(0.02*(Vd-51.1))/((np.exp(Vd-51.1)/5.0)-1.0)*s
+def slope_c(Vd,c):
+    return (0.5*(1-np.tanh((Vd-50.0)))*((1/18.975)*(np.exp(((Vd-10.0)/11.0)-((Vd-6.5)/27.0))))+0.5*(1+np.tanh(Vd-50.0))*2.0*np.exp((6.5-Vd)/27.0))*(1-c)  - (0.5*(1-np.tanh((Vd-50)))*2.0*np.exp((6.5-Vd)/27.0)-((1/18.975)*(np.exp(((Vd-10.0)/11.0)-((Vd-6.5)/27.0))))+0.5*(1+np.tanh((Vd+10)))*0)*c
+def slope_q(Ca,q):
+    return np.clip(0.00002*Ca,0,0.01)*(1-q) - 0.001*q
+def slope_S(Vs,S):
+  return -S/150 + np.matmul(Heaviside(Vs,10),G)
+def slope_W(Vs,W):
+  return -W/2 + np.matmul(Heaviside(Vs,20),G)
+
+time_steps=1000
+matrix1 = np.empty((num_neurons,time_steps))
+matrix2 = np.empty((num_neurons,time_steps))
+step=0.05
+ω=time_steps
+
+for i in range (0,ω):
+    ks1=step*(slope_Vs(Vs,h,n,Vd)+(Is/p)*(0.5*(1-np.tanh(i-20))))
+    ls1=step*slope_n(Vs,n)
+    ms1=step*slope_h(Vs,h)
+    ns1=step*slope_Ca(s,Vd,Ca)
+    kd1=step*slope_Vd(Vd,s,q,c,Ca,Vs)
+    ld1=step*slope_s(Vd,s)
+    md1=step*slope_c(Vd,c)
+    nd1=step*slope_q(Ca,q)
+    syn11=step*slope_S(Vs,S)
+    syn21=step*slope_W(Vs,W)
+
+
+    ks2=step*(slope_Vs(Vs+0.5*ks1,h+0.5*ms1,n+0.5*ls1,Vd+0.5*kd1)+(Is/p)*(0.5*(1-np.tanh(i-20))))
+    ls2=step*slope_n(Vs+0.5*ks1,n+0.5*ls1)
+    ms2=step*slope_h(Vs+0.5*ks1,h+0.5*ms1)
+    ns2=step*slope_Ca(s+0.5*ld1,Vd+0.5*kd1,Ca+0.5*ns1)
+    kd2=step*slope_Vd(Vd+0.5*kd1,s+0.5*ld1,q+0.5*nd1,c+0.5*md1,Ca+0.5*ns1,Vs+0.5*ks1)
+    ld2=step*slope_s(Vd+0.5*kd1,s+0.5*ld1)
+    md2=step*slope_c(Vd+0.5*kd1,c+0.5*md1)
+    nd2=step*slope_q(Ca+0.5*ns1,q+0.5*nd1)
+    syn12=step*slope_S(Vs+0.5*ks1,S+0.5*syn11)
+    syn22=step*slope_W(Vs+0.5*ks1,W+0.5*syn21)
+
+
+    ks3=step*(slope_Vs(Vs+0.5*ks2,h+0.5*ms2,n+0.5*ls2,Vd+0.5*kd2)+(Is/p)*(0.5*(1-np.tanh(i-20))))
+    ls3=step*slope_n(Vs+0.5*ks2,n+0.5*ls2)
+    ms3=step*slope_h(Vs+0.5*ks2,h+0.5*ms2)
+    ns3=step*slope_Ca(s+0.5*ld2,Vd+0.5*kd2,Ca+0.5*ns2)
+    kd3=step*slope_Vd(Vd+0.5*kd2,s+0.5*ld2,q+0.5*nd2,c+0.5*md2,Ca+0.5*ns2,Vs+0.5*ks2)
+    ld3=step*slope_s(Vd+0.5*kd2,s+0.5*ld2)
+    md3=step*slope_c(Vd+0.5*kd2,c+0.5*md2)
+    nd3=step*slope_q(Ca+0.5*ns2,q+0.5*nd2)
+    syn13=step*slope_S(Vs+0.5*ks2,S+0.5*syn12)
+    syn23=step*slope_W(Vs+0.5*ks2,W+0.5*syn22)
+
+
+    ks4=step*(slope_Vs(Vs+ks3,h+ms3,n+ls3,Vd+kd3)+(Is/p)*(0.5*(1-np.tanh(i-20))))
+    ls4=step*slope_n(Vs+ks3,n+ls3)
+    ms4=step*slope_h(Vs+ks3,h+ms3)
+    ns4=step*slope_Ca(s+ld3,Vd+kd3,Ca+ns3)
+    kd4=step*slope_Vd(Vd+kd3,s+ld3,q+nd3,c+md3,Ca+ns3,Vs+ks3)
+    ld4=step*slope_s(Vd+kd3,s+ld3)
+    md4=step*slope_c(Vd+kd3,c+md3)
+    nd4=step*slope_q(Ca+ns3,q+nd3)
+    syn14=step*slope_S(Vs+ks3,S+syn13)
+    syn24=step*slope_W(Vs+ks3,W+syn23)
+
+
+    ks5=(ks1+2*ks2+2*ks3+ks4)/6
+    ls5=(ls1+2*ls2+2*ls3+ls4)/6
+    ms5=(ms1+2*ms2+2*ms3+ms4)/6
+    ns5=(ns1+2*ns2+2*ns3+ns4)/6
+    kd5=(kd1+2*kd2+2*kd3+kd4)/6
+    ld5=(ld1+2*ld2+2*ld3+ld4)/6
+    md5=(md1+2*md2+2*md3+md4)/6
+    nd5=(nd1+2*nd2+2*nd3+nd4)/6
+    syn1=(syn11+2*syn12+2*syn13+syn14)/6
+    syn2=(syn21+2*syn22+2*syn23+syn24)/6
+
+    Vs+=ks5
+    n+=ls5
+    h+=ms5
+    Ca+=ns5
+    Vd+=kd5
+    s+=ld5
+    c+=md5
+    q+=nd5
+    S+=syn1
+    W+=syn2
+
+    matrix1[:,i]=Vs
+    matrix2[:,i]=Vd
+
+import numpy as np
+import matplotlib.pyplot as plt
+
+# Your code to calculate gAMPA_value and gNMDA_value goes here
+# Create a color plot (heatmap) of the matrix
+plt.subplot(221)
+plt.imshow(matrix1, cmap='bwr', interpolation='nearest', aspect='auto',origin='lower')
+plt.title(f'$g_{{AMPA}}={gAMPA}$, $g_{{NMDA}}={gNMDA}$')  # Using f-strings to insert the values
+plt.xlabel('integration or time steps')
+plt.ylabel('Neuron IDs')
+# Add color bar for reference
+
+cbar=plt.colorbar()
+cbar.set_label('Voltage')
+# Display the plot
+plt.show()
