@@ -1,0 +1,129 @@
+#pinsky-rinzel single neuron
+import numpy as np
+import matplotlib.pyplot as plt
+
+p=0.5
+gc=2.1
+Is=0.5
+Id=0.0
+
+gL=0.1
+gNa=30.0
+gK_DR=15.0
+gK_C=15.0
+gCa=10.0
+gK_AHP=0.8
+gKCa=15.0
+
+Cm=3.0
+X=[]
+Y=[]
+Z=[]
+Vs=0
+Vd=0
+Ca=0
+h=0
+n=0
+s=0
+c=0
+q=0
+
+VL  = 0.0
+VNa = 120
+VK  = -15.0
+VCa = 140
+
+
+def slope_Vs(Vs,h,n,Vd):
+    return (-(gL*(Vs-VL))-(gNa*(((-(0.32*(Vs-13.1))/(np.exp(-(Vs-13.1)/4.0)-1.0))/((-(0.32*(Vs-13.1))/(np.exp(-(Vs-13.1)/4.0)-1.0))+((0.28*(Vs-40.1))/(np.exp((Vs-40.1)/5.0)-1.0))))**2)*h*(Vs-VNa)) -(gK_DR*n*(Vs-VK)) +(gc/p)*(Vd-Vs) +Is/p)/Cm
+def slope_Vd(Vd,s,q,c,Ca,Vs):
+    return (-(gL*(Vd-VL))-(gCa*(s**2)*(Vd-VCa))-(gK_AHP*q*(Vd-VK))-(gK_C*c*np.clip(Ca/250,0,1)*(Vd-VK)) +(gc/(1-p))*(Vs-Vd)+ Id/(1-p))/Cm
+def slope_Ca(s,Vd,Ca):
+    return (-0.13*(gCa*(s**2)*(Vd-VCa)) - 0.075*Ca)
+def slope_h(Vs,h):
+    return (0.128*np.exp((17.0-Vs)/18.0))*(1-h)-(4.0/(np.exp((-Vs+40.0)/5.0)+1.0))*(h)
+def slope_n(Vs,n):
+    return (-0.016*(Vs-35.1)/(np.exp(-(Vs-35.1)/5)-1.0))*(1-n)-(0.25*np.exp((-.025*Vs+.5)))*n
+def slope_s(Vd,s):
+    return (1.6/(1.0+np.exp(-0.072*(Vd-65.0))))*(1-s)-(0.02*(Vd-51.1))/((np.exp(Vd-51.1)/5.0)-1.0)*s
+def slope_c(Vd,c):
+    return (0.5*(1-np.tanh((Vd-50.0)))*((1/18.975)*(np.exp(((Vd-10.0)/11.0)-((Vd-6.5)/27.0))))+0.5*(1+np.tanh(Vd-50.0))*2.0*np.exp((6.5-Vd)/27.0))*(1-c)  - (0.5*(1-np.tanh((Vd-50)))*2.0*np.exp((6.5-Vd)/27.0)-((1/18.975)*(np.exp(((Vd-10.0)/11.0)-((Vd-6.5)/27.0))))+0.5*(1+np.tanh((Vd+10)))*0)*c
+def slope_q(Ca,q):
+    return np.clip(0.00002*Ca,0,0.01)*(1-q) - 0.001*q
+
+
+step=0.05
+ω=10000
+
+for i in range (0,ω):
+
+    ks1=step*slope_Vs(Vs,h,n,Vd)
+    ls1=step*slope_n(Vs,n)
+    ms1=step*slope_h(Vs,h)
+    ns1=step*slope_Ca(s,Vd,Ca)
+    kd1=step*slope_Vd(Vd,s,q,c,Ca,Vs)
+    ld1=step*slope_s(Vd,s)
+    md1=step*slope_c(Vd,c)
+    nd1=step*slope_q(Ca,q)
+
+
+    ks2=step*slope_Vs(Vs+0.5*ks1,h+0.5*ms1,n+0.5*ls1,Vd+0.5*kd1)
+    ls2=step*slope_n(Vs+0.5*ks1,n+0.5*ls1)
+    ms2=step*slope_h(Vs+0.5*ks1,h+0.5*ms1)
+    ns2=step*slope_Ca(s+0.5*ld1,Vd+0.5*kd1,Ca+0.5*ns1)
+    kd2=step*slope_Vd(Vd+0.5*kd1,s+0.5*ld1,q+0.5*nd1,c+0.5*md1,Ca+0.5*ns1,Vs+0.5*ks1)
+    ld2=step*slope_s(Vd+0.5*kd1,s+0.5*ld1)
+    md2=step*slope_c(Vd+0.5*kd1,c+0.5*md1)
+    nd2=step*slope_q(Ca+0.5*ns1,q+0.5*nd1)
+
+
+    ks3=step*slope_Vs(Vs+0.5*ks2,h+0.5*ms2,n+0.5*ls2,Vd+0.5*kd2)
+    ls3=step*slope_n(Vs+0.5*ks2,n+0.5*ls2)
+    ms3=step*slope_h(Vs+0.5*ks2,h+0.5*ms2)
+    ns3=step*slope_Ca(s+0.5*ld2,Vd+0.5*kd2,Ca+0.5*ns2)
+    kd3=step*slope_Vd(Vd+0.5*kd2,s+0.5*ld2,q+0.5*nd2,c+0.5*md2,Ca+0.5*ns2,Vs+0.5*ks2)
+    ld3=step*slope_s(Vd+0.5*kd2,s+0.5*ld2)
+    md3=step*slope_c(Vd+0.5*kd2,c+0.5*md2)
+    nd3=step*slope_q(Ca+0.5*ns2,q+0.5*nd2)
+
+
+    ks4=step*slope_Vs(Vs+ks3,h+ms3,n+ls3,Vd+kd3)
+    ls4=step*slope_n(Vs+ks3,n+ls3)
+    ms4=step*slope_h(Vs+ks3,h+ms3)
+    ns4=step*slope_Ca(s+ld3,Vd+kd3,Ca+ns3)
+    kd4=step*slope_Vd(Vd+kd3,s+ld3,q+nd3,c+md3,Ca+ns3,Vs+ks3)
+    ld4=step*slope_s(Vd+kd3,s+ld3)
+    md4=step*slope_c(Vd+kd3,c+md3)
+    nd4=step*slope_q(Ca+ns3,q+nd3)
+
+
+    ks5=(ks1+2*ks2+2*ks3+ks4)/6
+    ls5=(ls1+2*ls2+2*ls3+ls4)/6
+    ms5=(ms1+2*ms2+2*ms3+ms4)/6
+    ns5=(ns1+2*ns2+2*ns3+ns4)/6
+    kd5=(kd1+2*kd2+2*kd3+kd4)/6
+    ld5=(ld1+2*ld2+2*ld3+ld4)/6
+    md5=(md1+2*md2+2*md3+md4)/6
+    nd5=(nd1+2*nd2+2*nd3+nd4)/6
+
+
+    Vs+=ks5
+    n+=ls5
+    h+=ms5
+    Ca+=ns5
+    Vd+=kd5
+    s+=ld5
+    c+=md5
+    q+=nd5
+
+
+    X.append(Vs)
+    Y.append(Vd)
+
+plt.subplot(221)
+plt.plot(np.arange(ω),X,label='soma')
+plt.plot(np.arange(ω),Y,label='dendrite')
+plt.grid()
+plt.xlabel('time(ms)')
+plt.ylabel('Voltage')
+plt.legend()
