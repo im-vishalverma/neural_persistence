@@ -1,5 +1,4 @@
 Hello,
-These are the codes for the paper titled "What Causes Persistent Neural Activity?" authored by Vishal Verma available on biorxv.
-If you want to use something, feel free to do it. But CITE "What Causes Persistent Neural Activity?" preprint if you do.
-In the paper, the proposal that the energy constrained neural net models can be useful for studying epilepsy; as the last sentence of the paper in the Discussion section; has been extended as a new preprint at biorxiv discussing brain dynamics during the Myoclonic Seizures in infants.
+These are the codes for the paper titled "Emergence of neural persistence: Insights from computational modelling" authored by Vishal Verma available on biorxv.
+If you want to use something, feel free to do it. But CITE the preprint if you do.
 Thank you.
